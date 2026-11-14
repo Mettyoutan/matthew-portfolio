@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYPE — Hero directions</title>
+<!--
+  PROTOTYPE — throwaway.
+  Question: which hero direction should the portfolio use?
+  Four structurally different heroes, switchable via ?variant=A|B|C|D.
+  Snap toggle exists to test scroll-snap feel (Q1).
+  Not production code. Do not merge the switcher.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Geist:wght@300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EBEBEB;
+    --paper-2:#E4E4DE;
+    --ink:#14231C;
+    --green:#3B6E3E;
+    --line:rgba(20,35,28,.18);
+    --muted:#6B7468;
+    --sans:"Geist",system-ui,sans-serif;
+    --serif:"Fraunces",Georgia,serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+    --pad:clamp(20px,3.4vw,52px);
+    --bar:62px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  html.snap{scroll-snap-type:y proximity}
+  html.snap .poster{scroll-snap-align:start;scroll-snap-stop:always}
+  body{
+    background:var(--paper);color:var(--ink);
+    font-family:var(--sans);-webkit-font-smoothing:antialiased;
+    overflow-x:clip;
+  }
+  [hidden]{display:none!important}
+  img{display:block;max-width:100%}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:var(--green);color:var(--paper)}
+  .skip{position:absolute;left:-9999px;top:8px;background:var(--ink);color:var(--paper);padding:10px 14px;z-index:200}
+  .skip:focus{left:8px}
+  .mono{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+  .poster{position:relative;min-height:100svh;overflow:hidden}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block}
+
+  /* ---------- right index ---------- */
+  .index{
+    position:fixed;right:clamp(12px,1.6vw,24px);top:50%;transform:translateY(-50%);
+    z-index:60;display:flex;flex-direction:column;gap:14px;align-items:flex-end;
+    mix-blend-mode:difference;color:#fff;
+  }
+  .index a{font-family:var(--mono);font-size:10px;letter-spacing:.1em;opacity:.45;transition:opacity .3s}
+  .index a:hover,.index a[aria-current="true"]{opacity:1}
+  .index span{display:block;width:22px;height:1px;background:currentColor;margin-top:5px;opacity:.35}
+  .index a[aria-current="true"] span{width:38px;opacity:1}
+
+  /* =========================================================
+     A — MONOLITH
+     ========================================================= */
+  .hero--a{padding:var(--pad);background:
+    repeating-linear-gradient(90deg,transparent 0 calc(100%/6 - 1px),var(--line) calc(100%/6 - 1px) calc(100%/6));
+  }
+  .hero--a::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(180deg,rgba(235,235,235,.1),rgba(235,235,235,0) 40%)}
+  .a-top{display:flex;justify-content:space-between;position:relative;z-index:3}
+  .a-portrait{
+    position:absolute;right:12%;top:14%;width:18vw;min-width:150px;max-width:250px;
+    aspect-ratio:4/5;background:var(--green);overflow:hidden;
+  }
+  .a-portrait img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.08);mix-blend-mode:luminosity;opacity:.9}
+  .a-portrait::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(20,35,28,.75));}
+  .a-portrait span{position:absolute;left:12px;bottom:10px;color:var(--paper);z-index:2;font-family:var(--mono);font-size:10px;letter-spacing:.12em}
+  .a-name{
+    position:absolute;left:var(--pad);top:50%;transform:translateY(-50%);
+    font-size:clamp(5.4rem,17.2vw,19rem);line-height:.76;letter-spacing:-.065em;
+    font-weight:800;z-index:2;pointer-events:none;
+  }
+  .a-name span{display:block}
+  .a-name span:last-child{margin-left:clamp(28px,7vw,120px)}
+  .a-name em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--green);letter-spacing:-.03em}
+  .a-role{position:absolute;left:var(--pad);top:calc(var(--pad) + 44px);display:flex;gap:12px;align-items:flex-start;z-index:3}
+  .a-role p{font-size:clamp(12px,1.1vw,15px);line-height:1.45}
+  .a-bio{position:absolute;left:var(--pad);bottom:calc(var(--pad) + 42px);max-width:36ch;font-size:clamp(13px,1.15vw,16px);line-height:1.55;z-index:3}
+  .a-bio b{font-weight:500}
+  .a-foot{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--pad);display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:12px;z-index:3}
+  .a-foot .mono{color:var(--muted)}
+
+  /* =========================================================
+     B — EDITORIAL COVER
+     ========================================================= */
+  .hero--b{display:grid;grid-template-columns:58% 42%;padding:0}
+  .b-left{display:flex;flex-direction:column;justify-content:space-between;padding:var(--pad);min-height:100svh}
+  .b-head{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:14px}
+  .b-title{padding:4vh 0}
+  .b-kicker{display:flex;align-items:center;gap:10px;margin-bottom:clamp(20px,3vw,38px)}
+  .b-title h1{font-size:clamp(2.9rem,6.3vw,7.4rem);line-height:.94;letter-spacing:-.045em;font-weight:500}
+  .b-title h1 em{font-family:var(--serif);font-style:italic;color:var(--green);font-weight:400;letter-spacing:-.025em}
+  .b-bio{max-width:34ch;font-size:clamp(13px,1.1vw,15px);line-height:1.6;color:var(--muted);margin-top:clamp(22px,3vw,40px)}
+  .b-foot{display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid var(--line);padding-top:14px}
+  .b-right{position:relative;background:var(--green);overflow:hidden;min-height:100svh}
+  .b-right img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05);mix-blend-mode:luminosity;opacity:.92}
+  .b-right::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,35,28,.05) 40%,rgba(20,35,28,.55))}
+  .b-num{position:absolute;top:var(--pad);right:var(--pad);font-family:var(--serif);font-style:italic;font-size:clamp(3rem,6vw,6rem);line-height:1;color:var(--paper);z-index:2}
+  .b-caption{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--pad);display:flex;justify-content:space-between;color:var(--paper);z-index:2}
+  .b-caption .mono{color:rgba(235,235,235,.72)}
+  .b-vertical{position:absolute;left:18px;top:50%;transform:translateY(-50%) rotate(180deg);writing-mode:vertical-rl;color:rgba(235,235,235,.6);z-index:2}
+
+  /* =========================================================
+     C — DOSSIER GRID
+     ========================================================= */
+  .hero--c{padding:var(--pad);background:
+    repeating-linear-gradient(90deg,transparent 0 calc(100%/12 - 1px),rgba(20,35,28,.08) calc(100%/12 - 1px) calc(100%/12));
+  }
+  .c-top{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .c-main{display:grid;grid-template-columns:1fr 300px;gap:clamp(24px,4vw,70px);margin-top:clamp(40px,7vh,90px);position:relative;z-index:2}
+  .c-left h1{font-size:clamp(3.2rem,7.2vw,8.4rem);line-height:.9;letter-spacing:-.055em;font-weight:750}
+  .c-left h1 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--green);letter-spacing:-.03em}
+  .c-bio{max-width:32ch;margin-top:clamp(24px,3vw,38px);font-size:clamp(13px,1.1vw,15px);line-height:1.6;color:var(--muted)}
+  .c-right{padding-top:8px;display:flex;flex-direction:column;gap:22px}
+  .c-right img{width:100%;aspect-ratio:4/5;object-fit:cover;filter:grayscale(1);border:1px solid var(--line)}
+  .c-facts{border-top:1px solid var(--line)}
+  .c-facts div{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}
+  .c-facts dt{color:var(--muted)}
+  .c-facts dd{text-align:right}
+  .c-num{
+    position:absolute;right:var(--pad);bottom:calc(var(--pad) + 10px);
+    font-family:var(--serif);font-style:italic;font-size:clamp(7rem,18vw,19rem);
+    line-height:.7;color:transparent;-webkit-text-stroke:1px rgba(20,35,28,.22);
+    pointer-events:none;
+  }
+  .c-foot{position:absolute;left:var(--pad);right:var(--pad);bottom:var(--pad);display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:12px;z-index:3}
+  .c-foot .mono{color:var(--muted)}
+  @media (min-width:861px){
+    .hero--c{padding-right:calc(var(--pad) + 34px)}
+    .c-num{left:var(--pad);right:auto;bottom:calc(var(--pad) + 34px);-webkit-text-stroke:1px rgba(20,35,28,.16)}
+  }
+
+  /* =========================================================
+     D — KINETIC BANDS
+     ========================================================= */
+  .hero--d{display:flex;flex-direction:column;justify-content:space-between;padding:var(--pad)}
+  .d-top{display:flex;justify-content:space-between;z-index:3}
+  .d-stage{position:relative;flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
+  .d-portrait{
+    position:absolute;z-index:2;width:clamp(190px,26vw,360px);aspect-ratio:4/5;
+    overflow:hidden;border-radius:50% 50% 4px 4px;border:1px solid var(--line);
+    background:var(--green);
+  }
+  .d-portrait img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.1);mix-blend-mode:luminosity;opacity:.95}
+  .d-bands{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;gap:clamp(10px,1.6vw,22px);z-index:1}
+  .band{overflow:hidden;white-space:nowrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:clamp(6px,1vw,14px) 0}
+  .band-track{display:inline-flex;gap:0;animation:marquee 26s linear infinite}
+  .band-track span{
+    font-size:clamp(2.8rem,7.6vw,8.6rem);line-height:1;letter-spacing:-.05em;font-weight:800;
+    padding-right:.32em;white-space:nowrap;
+  }
+  .band:nth-child(2) .band-track span{color:transparent;-webkit-text-stroke:1.4px var(--ink);font-weight:700}
+  .band:nth-child(3) .band-track span{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--paper)}
+  .band:nth-child(3){background:var(--green);border-color:var(--green)}
+  .d-portrait{box-shadow:0 0 0 10px var(--paper)}
+  .d-bio{position:relative;z-index:3;max-width:40ch;font-size:clamp(13px,1.1vw,15px);line-height:1.55;margin:0 auto clamp(18px,3vh,34px);text-align:center}
+  .d-foot{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:12px;position:relative;z-index:3}
+  .d-foot .mono{color:var(--muted)}
+  @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  /* =========================================================
+     ABOUT — shared, to test scroll + snap
+     ========================================================= */
+  .about{display:flex;align-items:center;padding:var(--pad);background:var(--paper-2)}
+  .about-inner{width:100%;max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1fr 1.4fr;gap:clamp(28px,6vw,90px)}
+  .about h2{font-size:clamp(2.4rem,5vw,5.4rem);line-height:.95;letter-spacing:-.045em;font-weight:600}
+  .about h2 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--green)}
+  .about-copy p{font-size:clamp(14px,1.15vw,17px);line-height:1.65;max-width:48ch;margin-bottom:18px}
+  .about-copy p:last-child{color:var(--muted)}
+  .about-stats{display:flex;gap:clamp(20px,4vw,54px);margin-top:38px;border-top:1px solid var(--line);padding-top:18px}
+  .about-stats b{display:block;font-family:var(--serif);font-style:italic;font-size:clamp(1.8rem,3vw,3rem);font-weight:400;line-height:1}
+  .about-stats span{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+  /* =========================================================
+     PROTOTYPE SWITCHER
+     ========================================================= */
+  .switcher{
+    position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:120;
+    display:flex;align-items:center;gap:4px;padding:6px;
+    background:var(--ink);color:var(--paper);border-radius:999px;
+    box-shadow:0 12px 30px rgba(20,35,28,.28);font-family:var(--mono);font-size:11px;
+    white-space:nowrap;
+  }
+  .switcher button{
+    background:none;border:0;color:inherit;font:inherit;cursor:pointer;
+    padding:9px 12px;border-radius:999px;letter-spacing:.06em;white-space:nowrap;flex-shrink:0;
+  }
+  .switcher button:hover,.switcher button:focus-visible{background:rgba(235,235,235,.14)}
+  .switcher .label{padding:0 10px;white-space:nowrap;flex-shrink:0}
+  .switcher .label b{color:#9CC49F;font-weight:500}
+  .switcher .snapbtn{border-left:1px solid rgba(235,235,235,.22);border-radius:0;margin-left:4px;color:rgba(235,235,235,.75);white-space:nowrap}
+  .switcher .snapbtn[aria-pressed="true"]{color:#9CC49F}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+  @media (max-width:860px){
+    .index{display:none}
+    .hero--a{background:repeating-linear-gradient(90deg,transparent 0 calc(100%/3 - 1px),var(--line) calc(100%/3 - 1px) calc(100%/3))}
+    .a-portrait{width:34vw;right:8%;top:12%;opacity:.85}
+    .a-name{font-size:clamp(4.2rem,22vw,9rem);top:46%}
+    .a-name span:last-child{margin-left:clamp(16px,8vw,60px)}
+    .a-role{top:auto;bottom:calc(var(--pad) + 168px)}
+    .a-bio{bottom:calc(var(--pad) + 96px);max-width:30ch}
+    .hero--b{grid-template-columns:1fr;grid-template-rows:auto 44svh}
+    .b-left{min-height:calc(56svh)}
+    .b-right{min-height:44svh}
+    .b-vertical{display:none}
+    .b-title h1{font-size:clamp(2.6rem,10vw,4.6rem)}
+    .b-bio{margin-top:18px}
+    .c-main{grid-template-columns:1fr;gap:26px}
+    .c-right{display:grid;grid-template-columns:120px 1fr;gap:18px;align-items:start}
+    .c-num{font-size:9rem;bottom:80px;opacity:.7}
+    .c-left h1{font-size:clamp(2.6rem,10.5vw,5rem)}
+    .d-portrait{width:48vw}
+    .band-track span{font-size:clamp(2.4rem,11vw,4.4rem)}
+    .d-bio{max-width:30ch}
+    .about{min-height:100svh}
+    .about-inner{grid-template-columns:1fr;gap:24px;padding:10vh 0}
+    .about h2{font-size:clamp(2.2rem,9vw,4rem)}
+    .a-foot{bottom:calc(var(--pad) + 46px)}
+    .c-foot,.d-foot{bottom:calc(var(--pad) + 46px)}
+    .b-left{padding-bottom:calc(var(--pad) + 46px)}
+    .switcher{bottom:8px;font-size:9px;max-width:calc(100vw - 16px);gap:0;padding:4px}
+    .switcher button{padding:8px 7px}
+    .switcher .label{padding:0 3px}
+    .switcher .snapbtn{margin-left:2px;padding-left:6px;padding-right:6px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    .band-track{animation:none}
+    *{transition:none!important}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#about">Skip to about</a>
+
+<nav class="index" aria-label="Sections">
+  <a href="#top" aria-current="true">01<span></span></a>
+  <a href="#about">02<span></span></a>
+</nav>
+
+<main id="top">
+
+  <!-- ================= A — MONOLITH ================= -->
+  <section class="hero hero--a poster" data-hero="A">
+    <div class="a-top mono"><span>Portfolio — 2026</span><span>Jakarta, ID</span></div>
+    <div class="a-role"><span class="dot"></span><p>Computer Science student<br>Full-stack developer</p></div>
+    <div class="a-portrait" aria-hidden="true">
+      <img src="avatar.jpg" alt="">
+      <span>01 / 09</span>
+    </div>
+    <h1 class="a-name"><span>MAT</span><span>THE<em>W</em></span></h1>
+    <p class="a-bio"><b>Nothing humbles a Computer Science major</b> quite like a debugging session that lasts longer than the actual coding.</p>
+    <div class="a-foot mono"><span>Scroll to explore ↓</span><span>Open to internships</span></div>
+  </section>
+
+  <!-- ================= B — EDITORIAL COVER ================= -->
+  <section class="hero hero--b poster" data-hero="B" hidden>
+    <div class="b-left">
+      <div class="b-head mono"><span>Matthew Tan</span><span>Portfolio — 2026</span></div>
+      <div class="b-title">
+        <p class="b-kicker mono"><span class="dot"></span>Computer Science / Full-stack</p>
+        <h1>I build systems<br><em>that outlive</em><br>the demo.</h1>
+        <p class="b-bio">TypeScript, Java, and a stubborn habit of reading the error message. Currently studying at BINUS, building things that work after the presentation ends.</p>
+      </div>
+      <div class="b-foot mono"><span>Jakarta, ID</span><span>Open to internships</span></div>
+    </div>
+    <div class="b-right">
+      <img src="avatar.jpg" alt="Portrait of Matthew">
+      <span class="b-num">01</span>
+      <span class="b-vertical mono">Scroll ↓</span>
+      <div class="b-caption mono"><span>Profile / 2026</span><span>01 — 09</span></div>
+    </div>
+  </section>
+
+  <!-- ================= C — DOSSIER GRID ================= -->
+  <section class="hero hero--c poster" data-hero="C" hidden>
+    <div class="c-top mono"><span>Matthew Tan — Portfolio index</span><span>No. 01 / 2026</span></div>
+    <div class="c-main">
+      <div class="c-left">
+        <h1>Computer<br>Science<br><em>full-stack</em></h1>
+        <p class="c-bio">I turn requirements into systems, and error messages into fixes. Three shipped projects, one certification, and twenty public repositories so far.</p>
+      </div>
+      <div class="c-right">
+        <img src="avatar.jpg" alt="Portrait of Matthew">
+        <dl class="c-facts">
+          <div><dt>Based</dt><dd>Jakarta, ID</dd></div>
+          <div><dt>Focus</dt><dd>TypeScript / Java</dd></div>
+          <div><dt>Status</dt><dd>Open to internships</dd></div>
+          <div><dt>Repos</dt><dd>20 public</dd></div>
+        </dl>
+      </div>
+    </div>
+    <div class="c-num" aria-hidden="true">01</div>
+    <div class="c-foot mono"><span>Scroll to explore ↓</span><span>Profile / 2026</span></div>
+  </section>
+
+  <!-- ================= D — KINETIC BANDS ================= -->
+  <section class="hero hero--d poster" data-hero="D" hidden>
+    <div class="d-top mono"><span>Matthew Tan — Portfolio</span><span>Jakarta, ID / 2026</span></div>
+    <div class="d-stage">
+      <div class="d-bands" aria-hidden="true">
+        <div class="band"><div class="band-track"><span>MATTHEW&nbsp;✳&nbsp;MATTHEW&nbsp;✳&nbsp;</span><span>MATTHEW&nbsp;✳&nbsp;MATTHEW&nbsp;✳&nbsp;</span></div></div>
+        <div class="band"><div class="band-track"><span>FULL-STACK&nbsp;✳&nbsp;FULL-STACK&nbsp;✳&nbsp;</span><span>FULL-STACK&nbsp;✳&nbsp;FULL-STACK&nbsp;✳&nbsp;</span></div></div>
+        <div class="band"><div class="band-track"><span>build&nbsp;·&nbsp;break&nbsp;·&nbsp;fix&nbsp;·&nbsp;</span><span>build&nbsp;·&nbsp;break&nbsp;·&nbsp;fix&nbsp;·&nbsp;</span></div></div>
+      </div>
+      <div class="d-portrait"><img src="avatar.jpg" alt="Portrait of Matthew"></div>
+    </div>
+    <p class="d-bio">Nothing humbles a Computer Science major quite like a debugging session that lasts longer than the actual coding.</p>
+    <div class="d-foot mono"><span>Scroll to explore ↓</span><span>Open to internships</span></div>
+  </section>
+
+  <!-- ================= 02 — ABOUT (shared) ================= -->
+  <section class="about poster" id="about">
+    <div class="about-inner">
+      <div>
+        <p class="mono" style="margin-bottom:18px">02 / About</p>
+        <h2>Evidence<br>over <em>adjectives.</em></h2>
+        <div class="about-stats">
+          <div><b>03</b><span>Projects</span></div>
+          <div><b>01</b><span>Certification</span></div>
+          <div><b>20</b><span>Public repos</span></div>
+        </div>
+      </div>
+      <div class="about-copy">
+        <p>I study Computer Science at BINUS and build full-stack systems in TypeScript and Java. I care about code that is understandable six months later, not just code that runs today.</p>
+        <p>This section exists in the prototype only to test the scroll rhythm and the snap toggle. Content will be replaced during the interview phase.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="switcher" role="group" aria-label="Prototype controls">
+  <button id="prev" aria-label="Previous variant">←</button>
+  <span class="label" id="label">A <b>(Monolith)</b></span>
+  <button id="next" aria-label="Next variant">→</button>
+  <button class="snapbtn" id="snap" aria-pressed="false">snap: off</button>
+</div>
+<p class="sr" id="live" aria-live="polite"></p>
+
+<script>
+  const variants = [
+    { key:'A', name:'Monolith' },
+    { key:'B', name:'Editorial cover' },
+    { key:'C', name:'Dossier grid' },
+    { key:'D', name:'Kinetic bands' }
+  ];
+  const heroes = [...document.querySelectorAll('[data-hero]')];
+  const labelEl = document.getElementById('label');
+  const liveEl = document.getElementById('live');
+  let index = 0;
+
+  function render(key, push){
+    const i = variants.findIndex(v => v.key === key);
+    index = i < 0 ? 0 : i;
+    const v = variants[index];
+    heroes.forEach(h => { h.hidden = h.dataset.hero !== v.key; });
+    labelEl.innerHTML = v.key + ' <b>(' + v.name + ')</b>';
+    liveEl.textContent = 'Variant ' + v.key + ', ' + v.name;
+    if (push) {
+      const url = new URL(location.href);
+      url.searchParams.set('variant', v.key);
+      history.replaceState(null, '', url);
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  function step(dir){
+    const next = (index + dir + variants.length) % variants.length;
+    render(variants[next].key, true);
+  }
+
+  document.getElementById('prev').addEventListener('click', () => step(-1));
+  document.getElementById('next').addEventListener('click', () => step(1));
+
+  const snapBtn = document.getElementById('snap');
+  snapBtn.addEventListener('click', () => {
+    const on = document.documentElement.classList.toggle('snap');
+    snapBtn.setAttribute('aria-pressed', String(on));
+    snapBtn.textContent = 'snap: ' + (on ? 'proximity' : 'off');
+  });
+
+  addEventListener('keydown', (e) => {
+    const t = e.target;
+    if (t.matches('input, textarea, [contenteditable]')) return;
+    if (e.key === 'ArrowRight') step(1);
+    if (e.key === 'ArrowLeft') step(-1);
+  });
+
+  render((new URLSearchParams(location.search).get('variant') || 'A').toUpperCase(), false);
+</script>
+</body>
+</html>
